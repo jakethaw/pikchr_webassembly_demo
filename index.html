@@ -1,0 +1,71 @@
+<!doctype html>
+<html>
+  <head>
+    <title>Pikchr Webassembly Demo</title>
+  </head>
+  <body>
+    <h1>Pikchr Webassembly Demo</h1>
+    
+    <p>
+      Official site: <a href="https://pikchr.org">pikchr.org</a>
+    </p>
+    <p>
+      <a href="https://github.com/jakethaw/pikchr_webassembly_demo">github.com/jakethaw/pikchr_webassembly_demo</a>
+    </p>
+    
+    <p>
+      <select id="file" onchange="select_file()">
+        <option value="headings01.pikchr">headings01.pikchr</option>
+        <option value="objects.pikchr">objects.pikchr</option>
+        <option value="swimlane.pikchr">swimlane.pikchr</option>
+      </select>
+    </p>
+    
+    <table>
+      <tr>
+        <td style="vertical-align: top;">
+          <textarea id="pikchr" wrap="off" rows="35" cols="80"></textarea>
+        </td>
+        <td style="width:50%">
+          <div id="svg"></div>
+        </td>
+      </tr>
+    </table>
+
+    <script>
+
+      // https://emscripten.org/docs/api_reference/module.html
+      var Module = {
+        'onRuntimeInitialized': function() {
+          select_file();
+        }
+      };
+
+      document.getElementById("pikchr").addEventListener('input', eval_pikchr, false);
+
+      function eval_pikchr(){
+        let pikchr = allocate(intArrayFromString(document.getElementById("pikchr").value), 'i8', ALLOC_NORMAL);
+        let svg = _pikchr(pikchr, "pikchr", 0, 0, 0);
+
+        document.getElementById('svg').innerHTML = UTF8ToString(svg, 1024*1024);
+        
+        _free(pikchr);
+        _free(svg);
+      }
+
+      function select_file(){
+        const file_element = document.getElementById("file");
+        const file = file_element.options[file_element.selectedIndex].value;
+        fetch(file)
+          .then(response => response.text())
+          .then(data => {
+            document.getElementById("pikchr").value = data;
+            eval_pikchr();
+          });
+      }
+
+    </script>
+    <script type="text/javascript" src="pikchr.js"></script>
+
+  </body>
+</html>
